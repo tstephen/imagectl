@@ -16,9 +16,12 @@
 # Command line client for managing an image library.
 #
 ###############################################################################
+from datetime import datetime
+import hashlib
 import logging
 import os
 from os.path import join, getctime, getmtime, getsize
+from time import ctime, strftime
 
 from imagectl.api import ImageCommand, ImageCommandOptions
 from imagectl.constants import TOOL
@@ -43,12 +46,20 @@ class IndexCommand(ImageCommand):
 
         index = []
         for root, dirs, files in os.walk(options.input):
+            dir = root[len(options.input)+1:] if root.index(options.input) > -1 else ''
+            logger.info("...%s", dir)
             for name in files:
-                qualified_name = join(root, name)
-                index.append(IndexEntry(name=qualified_name[len(options.input)+1:],
-                                        created=getctime(qualified_name),
-                                        modified=getmtime(qualified_name),
-                                        size=getsize(qualified_name)))
+                if name[0] == '.':
+                    continue # ignore hidden files
+                qual_name = join(root, name)
+                rel_name = join(dir, name)
+                logger.debug("...%s", rel_name)
+                entry = IndexEntry(name=rel_name,
+                                    created=datetime.fromtimestamp(getctime(qual_name)).isoformat(),
+                                    modified=datetime.fromtimestamp(getmtime(qual_name)).isoformat(),
+                                    size=getsize(qual_name))
+                entry.calc_hash(qual_name)
+                index.append(entry)
         with open(join(options.input, f'.{TOOL.get("name")}'), 'w') as out:
             for entry in index:
                 out.write(entry.model_dump())

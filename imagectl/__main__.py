@@ -31,10 +31,10 @@ logger = logging.getLogger(__name__)
 def init_logging(args): 
     """initialise logging system"""
     if args.verbose is None:
-        args.verbose = 'INFO'
+        args.verbose = 'WARNING'
     logging.basicConfig() #NOSONAR
     logger.setLevel(args.verbose)
-    logger.warning("log verbosity set to %s", args.verbose)
+    logger.info("log verbosity set to %s", args.verbose)
 
 def register_commands(parser):
     """locate and instantiate all the commands available"""
