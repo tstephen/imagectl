@@ -29,6 +29,10 @@ from imagectl.models import IndexEntry
 
 logger = logging.getLogger(__name__)
 
+class IndexCommandOptions(ImageCommandOptions):
+    """configuration required by Index and Verify commands"""
+    input: str
+
 class IndexCommand(ImageCommand):
     """Command to index an image library"""
     NAME = 'index'

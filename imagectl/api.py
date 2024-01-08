@@ -22,6 +22,7 @@ from pydantic import BaseModel
 
 class ImageCommandOptions(BaseModel):
     """A model object containing options that target Command understoods"""
+    verbose: str = "WARNING"
 
 class ImageCommand(abc.ABC):
     """A command encapsulates one piece of functionality"""

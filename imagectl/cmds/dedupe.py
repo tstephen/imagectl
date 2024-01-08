@@ -19,12 +19,14 @@
 from datetime import datetime
 import logging
 import os
-from os.path import join, splitext
+from os.path import exists, join, splitext
 from shutil import move
 
 from pydantic_core import ValidationError
+from imagectl.__main__ import exec_cmd
 
 from imagectl.api import ImageCommand, ImageCommandOptions
+from imagectl.cmds.index import IndexCommandOptions
 from imagectl.constants import TOOL
 from imagectl.models import IndexEntry
 
@@ -50,12 +52,20 @@ class DedupeCommand(ImageCommand):
         logger.info("searching %s\nfor files already in %s",
                     options.target, options.reference)
 
-        with open(join(options.reference, f'.{TOOL.get("name")}'), 'r') as index:
+        ref_idx = join(options.reference, f'.{TOOL.get("name")}')
+        if not exists(ref_idx):
+            exec_cmd('index', IndexCommandOptions(
+                input=options.reference, verbose=options.verbose))
+        with open(ref_idx, 'r') as index:
             self.ref_entries = [IndexEntry.from_str(line)
                                 for line in index.readlines()]
             self.ref_by_name = {entry.name: entry for entry in self.ref_entries}
 
-        with open(join(options.target, f'.{TOOL.get("name")}'), 'r') as index:
+        trgt_idx = join(options.target, f'.{TOOL.get("name")}')
+        if not exists(trgt_idx):
+            exec_cmd('index', IndexCommandOptions(
+                input=options.target, verbose=options.verbose))
+        with open(trgt_idx, 'r') as index:
             for line in index.readlines():
                 try:
                     entry = IndexEntry.from_str(line)

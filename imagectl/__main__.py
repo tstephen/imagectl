@@ -23,10 +23,11 @@ import logging
 import sys
 
 import imagectl.cmds
-from imagectl.api import ImageCommand
+from imagectl.api import ImageCommand, ImageCommandOptions
 from imagectl.constants import TOOL
 
 logger = logging.getLogger(__name__)
+commands: dict
 
 def init_logging(args): 
     """initialise logging system"""
@@ -52,6 +53,14 @@ def register_commands(parser):
                 commands[cmd.NAME] = cmd
     return commands
 
+def exec_cmd(cmd: str, options: ImageCommandOptions):
+    try:
+        commands[cmd].execute(options)
+    except ValueError as err:
+        logger.error(err)
+        commands[cmd].cmd.print_help(sys.stderr)
+        sys.exit(1)
+
 def main():
     '''Main entry point'''
 
@@ -59,6 +68,7 @@ def main():
     parser.add_argument("-v", "--verbose", help="increase output verbosity")
     parser._positionals.title = "commands"
 
+    global commands
     commands = register_commands(parser)
     args = parser.parse_args()
     init_logging(args)
@@ -67,12 +77,7 @@ def main():
         parser.print_help(sys.stderr)
         sys.exit(1)
     else:
-        try:
-            commands[args.command].execute(args)
-        except ValueError as err:
-            logger.error(err)
-            commands[args.command].cmd.print_help(sys.stderr)
-            sys.exit(1)
+        exec_cmd(args.command, args)
 
 if __name__ == "main":
     main()
