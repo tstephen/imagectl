@@ -1,6 +1,6 @@
-# Image library
+# Image control (`imagectl`)
 
-A collection of scripts for my own use to manage my image library.
+Tools to manage my image library.
 
 ## Features
 
