@@ -42,6 +42,8 @@ class IndexCommand(ImageCommand):
 
     def execute(self, options: ImageCommandOptions):
         logger.setLevel(options.verbose)
+        if options.input[-1:] == '/':
+            options.input = options.input[:-1]
         logger.info("indexing %s", options.input)
 
         index = []
