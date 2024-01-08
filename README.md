@@ -18,4 +18,8 @@ Check integrity of a image collection by comparison with a previously made index
 
 ### Deduplicate
 
-Remove duplicates from a image collection by comparison with a previously made index
+Consolidate a second (target) image collection into a reference collection by:
+
+* adding new files found in the target to the reference
+  * renaming files if there is a name collision
+* removing duplicates from the target collection

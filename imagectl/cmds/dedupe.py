@@ -16,15 +16,59 @@
 # Command line client for managing an image library.
 #
 ###############################################################################
-from imagectl.api import ImageCommand, ImageCommandOptions
+from datetime import datetime
+import logging
+import os
+from os.path import join, splitext
+from shutil import move
 
-class IndexCommand(ImageCommand):
+from pydantic_core import ValidationError
+
+from imagectl.api import ImageCommand, ImageCommandOptions
+from imagectl.constants import TOOL
+from imagectl.models import IndexEntry
+
+logger = logging.getLogger(__name__)
+
+class DedupeCommand(ImageCommand):
     """Command to deduplicate an image library"""
     NAME = 'dedupe'
     def __init__(self, subparsers):
         super().__init__(self)
         self.cmd = subparsers.add_parser(self.NAME,
                    help='remove duplicates from an image library')
+        self.cmd.add_argument("-r", "--reference", help="reference image directory")
+        self.cmd.add_argument("-t", "--target", help="directory to search for duplicates")
 
     def execute(self, options: ImageCommandOptions):
-        print(f'command {self.NAME} not yet implemented')
+        logger.setLevel(options.verbose)
+        logger.info("searching %s\nfor files already in %s",
+                    options.target, options.reference)
+
+        with open(join(options.reference, f'.{TOOL.get("name")}'), 'r') as index:
+            self.ref_entries = [IndexEntry.from_str(line)
+                                for line in index.readlines()]
+            self.ref_by_name = {entry.name: entry for entry in self.ref_entries}
+
+        with open(join(options.target, f'.{TOOL.get("name")}'), 'r') as index:
+            for line in index.readlines():
+                try:
+                    entry = IndexEntry.from_str(line)
+                    if entry.name in self.ref_by_name:
+                        ref = self.ref_by_name.get(entry.name)
+                        if entry.hash == ref.hash:
+                            logger.warning('...%s is matched, delete from target', entry.name)
+                            os.remove(join(options.target, entry.name))
+                        else:
+                            logger.warning('...%s is not in reference but must be renamed', entry.name)
+                            parts = splitext(entry.name)
+                            now = datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
+                            move(join(options.target, entry.name),
+                                 join(options.reference, f'{parts[0]}.{now}{parts[1]}'))
+                    else:
+                        logger.warning(f'...%s to be added to reference', entry.name)
+                        move(join(options.target, entry.name),
+                             join(options.reference, entry.name))
+                except ValidationError as ve:
+                    logger.error('unable to parse %s', line)
+                    continue
