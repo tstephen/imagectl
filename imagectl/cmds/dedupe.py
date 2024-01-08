@@ -36,12 +36,17 @@ class DedupeCommand(ImageCommand):
     def __init__(self, subparsers):
         super().__init__(self)
         self.cmd = subparsers.add_parser(self.NAME,
-                   help='remove duplicates from an image library')
+                   help='identify duplicates between 2 image libraries')
+        self.cmd.add_argument("-e", "--exec", action="store_true",
+                               help="perform the recommended actions")
         self.cmd.add_argument("-r", "--reference", help="reference image directory")
         self.cmd.add_argument("-t", "--target", help="directory to search for duplicates")
 
     def execute(self, options: ImageCommandOptions):
         logger.setLevel(options.verbose)
+        if options.reference is None or options.target is None:
+            raise ValueError("Both reference and target collections must be specified")
+
         logger.info("searching %s\nfor files already in %s",
                     options.target, options.reference)
 
@@ -58,17 +63,20 @@ class DedupeCommand(ImageCommand):
                         ref = self.ref_by_name.get(entry.name)
                         if entry.hash == ref.hash:
                             logger.warning('...%s is matched, delete from target', entry.name)
-                            os.remove(join(options.target, entry.name))
+                            if options.exec is True:
+                                os.remove(join(options.target, entry.name))
                         else:
-                            logger.warning('...%s is not in reference but must be renamed', entry.name)
-                            parts = splitext(entry.name)
-                            now = datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
-                            move(join(options.target, entry.name),
-                                 join(options.reference, f'{parts[0]}.{now}{parts[1]}'))
+                            logger.warning('...%s is different in reference, target file must be renamed', entry.name)
+                            if options.exec is True:
+                                parts = splitext(entry.name)
+                                now = datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
+                                move(join(options.target, entry.name),
+                                    join(options.reference, f'{parts[0]}.{now}{parts[1]}'))
                     else:
                         logger.warning(f'...%s to be added to reference', entry.name)
-                        move(join(options.target, entry.name),
-                             join(options.reference, entry.name))
+                        if options.exec is True:
+                            move(join(options.target, entry.name),
+                                 join(options.reference, entry.name))
                 except ValidationError as ve:
                     logger.error('unable to parse %s', line)
                     continue

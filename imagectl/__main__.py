@@ -67,7 +67,12 @@ def main():
         parser.print_help(sys.stderr)
         sys.exit(1)
     else:
-        commands[args.command].execute(args)
+        try:
+            commands[args.command].execute(args)
+        except ValueError as err:
+            logger.error(err)
+            commands[args.command].cmd.print_help(sys.stderr)
+            sys.exit(1)
 
 if __name__ == "main":
     main()

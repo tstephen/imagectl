@@ -38,6 +38,8 @@ class VerifyCommand(ImageCommand):
 
     def execute(self, options: ImageCommandOptions):
         logger.setLevel(options.verbose)
+        if options.input is None:
+            raise ValueError("Input collection must be specified")
         logger.info("verifying %s", options.input)
 
         with open(join(options.input, f'.{TOOL.get("name")}'), 'r') as index:
