@@ -21,7 +21,7 @@ import hashlib
 from hmac import compare_digest
 import logging
 from os.path import join, getctime, getmtime, getsize
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from pydantic import BaseModel, model_serializer
 
@@ -34,6 +34,14 @@ class IndexEntry(BaseModel):
     modified: str
     size: int
     hash: str = None
+
+    @classmethod
+    def from_str(cls, s: str) -> "IndexEntry":
+        fields = s.split(',')
+        return IndexEntry(name=unquote(fields[0]),
+                          created=fields[1],
+                          modified=fields[2], size=fields[3],
+                          hash='' if fields[4] is None else fields[4])
 
     def calc_hash(self, qual_name: str):
         with open(qual_name, 'rb') as afile:
@@ -57,4 +65,6 @@ class IndexEntry(BaseModel):
 
     @model_serializer
     def ser_model(self) -> str:
-        return f'{quote(self.name)},{self.created},{self.modified},{self.size},{self.hash}\n'
+        return f'{quote(self.name)},{self.created},'\
+                f'{self.modified},{self.size},'\
+                f'{"" if self.hash is None else self.hash}\n'

@@ -42,14 +42,9 @@ class IndexCommand(ImageCommand):
         logger.info("verifying %s", options.input)
 
         with open(join(options.input, f'.{TOOL.get("name")}'), 'r') as index:
-            entries = index.readlines()
-            for tmp in entries:
-                fields = tmp.split(',')
+            for line in index.readlines():
                 try:
-                    entry = IndexEntry(name=unquote(fields[0]),
-                                       created=fields[1],
-                                       modified=fields[2], size=fields[3],
-                                       hash='' if fields[4] is None else fields[4])
+                    entry = IndexEntry.from_str(line)
                     qual_name = join(options.input, entry.name)
                     if entry.matches(qual_name):
                         logger.info('...%s is verified', entry.name)
@@ -57,7 +52,6 @@ class IndexCommand(ImageCommand):
                         logger.info('...%s has the expected hash, update index', entry.name)
                     else:
                         logger.error("...%s has the wrong hash, investigate", entry.name)
-
                 except ValidationError as ve:
-                    logger.error('unable to parse %s', tmp)
+                    logger.error('unable to parse %s', line)
                     continue
