@@ -18,7 +18,6 @@
 ###############################################################################
 import logging
 from os.path import join
-from urllib.parse import unquote
 
 from pydantic_core import ValidationError
 
@@ -28,7 +27,7 @@ from imagectl.models import IndexEntry
 
 logger = logging.getLogger(__name__)
 
-class IndexCommand(ImageCommand):
+class VerifyCommand(ImageCommand):
     """Command to verify an image library"""
     NAME = 'verify'
     def __init__(self, subparsers):
