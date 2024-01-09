@@ -23,3 +23,7 @@ Consolidate a second (target) image collection into a reference collection by:
 * adding new files found in the target to the reference
   * renaming files if there is a name collision
 * removing duplicates from the target collection
+
+## TODO
+
+* Organise behaviour has not been integrated (currently reliant on older tool for this)
