@@ -69,5 +69,6 @@ class IndexCommand(ImageCommand):
                 entry.calc_hash(qual_name)
                 index.append(entry)
         with open(join(options.input, f'.{TOOL.get("name")}'), 'w') as out:
+            out.write("NAME,CREATED,MODIFIED,SIZE,HASH\n")
             for entry in index:
                 out.write(entry.model_dump())
