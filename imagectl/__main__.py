@@ -17,6 +17,7 @@
 #
 ###############################################################################
 import argparse
+import hashlib
 import importlib
 import inspect
 import logging
@@ -28,6 +29,15 @@ from imagectl.constants import TOOL
 
 logger = logging.getLogger(__name__)
 commands: dict
+
+def get_hash(in_file: str) -> str:
+    """returns the hash of the specified file"""
+    with open(in_file, 'rb') as f:
+        hasher = hashlib.md5()
+        hasher.update(f.read())
+        in_hash=hasher.hexdigest()
+        logger.debug('hash of %s is %s', in_file, in_hash)
+    return in_hash
 
 def init_logging(args): 
     """initialise logging system"""

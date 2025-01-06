@@ -16,16 +16,21 @@
 # Command line client for managing an image library.
 #
 ###############################################################################
+import logging
+from hmac import compare_digest
 import os
 import shutil
 
 from PIL import Image
 
+from imagectl.__main__ import get_hash
 from imagectl.api import ImageCommand, ImageCommandOptions
 
 VERBOSE = False
 # Set list of valid file extensions
 valid_extensions = [".JPG", ".jpg", ".jpeg", ".png"]
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class OrganiserCommand(ImageCommand):
     """Command to organise an image library"""
@@ -78,6 +83,16 @@ class OrganiserCommand(ImageCommand):
         else:
             return f"{year}-{month}-{day}-{file_base}{file_ext.lower()}"
 
+    @staticmethod
+    def is_writable(in_file, out_file):
+        """returns true if out_file does not exist or has the same hash"""
+        if not os.path.exists(out_file):
+            return True
+        else:
+            in_hash = get_hash(in_file)
+            out_hash = get_hash(out_file)
+            return compare_digest(in_hash.strip(), out_hash.strip())
+
     def process_image(self, in_file: str, out_dir: str, move: bool = False):
         print('    process image: ' + in_file)
         old_file_path = in_file
@@ -118,7 +133,7 @@ class OrganiserCommand(ImageCommand):
             .replace(":", "-") \
             .replace(" ", "-")
 
-        new_file_name = self.get_new_file_name(in_file, year, month, day)
+        out_file = self.get_new_file_name(in_file, year, month, day)
 
         # make target dir
         if not (os.path.exists(out_dir)):
@@ -131,14 +146,15 @@ class OrganiserCommand(ImageCommand):
             os.mkdir(trgt_path)
 
         # create the new dir path
-        new_file_path = os.path.join(trgt_path, new_file_name)
+        new_file_path = os.path.join(trgt_path, out_file)
 
-        # copy / move the file
-        if (move):
-            if (VERBOSE):
-                print('    moving from ' + old_file_path + ' to ' + new_file_path)
-            shutil.move(old_file_path, new_file_path)
-        else:
-            if (VERBOSE):
-                print('    copying from ' + old_file_path + ' to ' + new_file_path)
-            shutil.copy2(old_file_path, new_file_path)
+        if self.is_writable(in_file, out_file):
+            # copy / move the file
+            if (move):
+                if (VERBOSE):
+                    print('    moving from ' + old_file_path + ' to ' + new_file_path)
+                shutil.move(old_file_path, new_file_path)
+            else:
+                if (VERBOSE):
+                    print('    copying from ' + old_file_path + ' to ' + new_file_path)
+                shutil.copy2(old_file_path, new_file_path)

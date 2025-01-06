@@ -23,6 +23,7 @@ import logging
 from os.path import join, getctime, getmtime, getsize
 from urllib.parse import quote, unquote
 
+from imagectl.__main__ import get_hash
 from pydantic import BaseModel, model_serializer
 
 logger = logging.getLogger(__name__)
@@ -44,10 +45,7 @@ class IndexEntry(BaseModel):
                           hash='' if fields[4] is None else fields[4])
 
     def calc_hash(self, qual_name: str):
-        with open(qual_name, 'rb') as afile:
-            hasher = hashlib.md5()
-            hasher.update(afile.read())
-            self.hash=hasher.hexdigest()
+        self.hash=get_hash(qual_name)
 
     def matches(self, qual_name: str) -> bool:
         return (self.size == getsize(qual_name) \
@@ -55,13 +53,10 @@ class IndexEntry(BaseModel):
                 and self.modified == datetime.fromtimestamp(getmtime(qual_name)).isoformat())
 
     def hash_matches(self, qual_name: str) -> bool:
-        hasher = hashlib.md5()
-        with open(qual_name, 'rb') as afile:
-            hasher.update(afile.read())
-            digest = hasher.hexdigest()
-            logger.debug('comparing file hash: %s with index: %s',
-                           digest, self.hash)
-            return compare_digest(self.hash.strip(), digest.strip())
+        digest = get_hash(qual_name)
+        logger.debug('comparing file hash: %s with index: %s',
+                        digest, self.hash)
+        return compare_digest(self.hash.strip(), digest.strip())
 
     @model_serializer
     def ser_model(self) -> str:
