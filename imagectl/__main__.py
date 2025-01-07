@@ -27,6 +27,7 @@ import imagectl.cmds
 from imagectl.api import ImageCommand, ImageCommandOptions
 from imagectl.constants import TOOL
 
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 commands: dict
 
