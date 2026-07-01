@@ -1,0 +1,87 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":separateMajorReleases"
+  ],
+  "timezone": "UTC",
+  "schedule": [
+    "before 4pm on thursday"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "prConcurrentLimit": 10,
+  "prCreation": "immediate",
+  "rebaseWhen": "behind-base-branch",
+  "minimumReleaseAge": "3 days",
+  "separateMajorMinor": true,
+  "separateMinorPatch": false,
+  "packageRules": [
+    {
+      "description": "Auto-merge non-major updates after CI passes",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Manual review required for major updates",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Python/Poetry configuration",
+      "matchManagers": [
+        "poetry"
+      ],
+      "addLabels": [
+        "python"
+      ],
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Never automerge Renovate config migration PRs",
+      "matchFileNames": [
+        "renovate.json"
+      ],
+      "addLabels": [
+        "renovate-config"
+      ],
+      "automerge": false
+    }
+  ],
+  "configMigration": true,
+  "poetry": {
+    "enabled": true
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "labels": [
+      "dependencies",
+      "lockfile-maintenance"
+    ],
+    "schedule": [
+      "before 4pm on thursday"
+    ],
+    "automerge": true,
+    "automergeType": "pr"
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security"
+    ],
+    "automerge": true
+  }
+}
