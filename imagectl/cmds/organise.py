@@ -25,10 +25,15 @@ from PIL import Image
 
 from imagectl.__main__ import get_hash
 from imagectl.api import ImageCommand, ImageCommandOptions
+from imagectl.constants import valid_extensions
 
-# Set list of valid file extensions
-valid_extensions = [".jpg", ".jpeg", ".png"]
 logger = logging.getLogger(__name__)
+
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+except ImportError:
+    logger.warning("pillow_heif not installed, HEIC files will not be processable")
 
 class OrganiserCommand(ImageCommand):
     """Command to organise an image library"""
@@ -92,24 +97,31 @@ class OrganiserCommand(ImageCommand):
     def process_image(self, in_file: str, out_dir: str, move: bool = False):
         logger.info('process image: %s to %s', in_file, out_dir)
 
+        image = None
         try:
             logger.debug('opening image: %s', in_file)
             image = Image.open(in_file)
-            if (not image._getexif()):
+            exif_data = image.getexif()
+            
+            if not exif_data:
                 raise ValueError(f'no EXIF data available in {in_file}')
 
-            date_taken = image._getexif()[36867]
+            # EXIF date taken is tag 36867 (DateTime), 306 (DateTime), or 36865 (DateTimeOriginal)
+            date_taken = exif_data.get(36867) or exif_data.get(306) or exif_data.get(36865)
+            if not date_taken:
+                raise ValueError(f'no date taken in EXIF data for {in_file}')
         except IndexError:
             logger.warning('skipping %s because no date taken in EXIF data', in_file)
             return
         except ValueError as ve:
             logger.warning(ve)
             return
-        except:
-            logger.warning('cannot open %s', in_file)
+        except Exception as e:
+            logger.warning('cannot open %s: %s', in_file, str(e))
             return
         finally:
-            image.close()
+            if image:
+                image.close()
 
         # extract parts of date and format
         year = date_taken[0:4]

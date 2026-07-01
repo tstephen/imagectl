@@ -17,14 +17,12 @@
 #
 ###############################################################################
 from datetime import datetime
-import hashlib
 import logging
 import os
 from os.path import join, getctime, getmtime, getsize
-from time import ctime, strftime
 
 from imagectl.api import ImageCommand, ImageCommandOptions
-from imagectl.constants import TOOL
+from imagectl.constants import TOOL, valid_extensions
 from imagectl.models import IndexEntry
 
 logger = logging.getLogger(__name__)
@@ -36,7 +34,6 @@ class IndexCommandOptions(ImageCommandOptions):
 class IndexCommand(ImageCommand):
     """Command to index an image library"""
     NAME = 'index'
-    valid_extensions = [".jpg", ".jpeg", ".png"]
 
     def __init__(self, subparsers):
         super().__init__(self)
@@ -59,6 +56,8 @@ class IndexCommand(ImageCommand):
             for name in files:
                 if name[0] == '.':
                     continue # ignore hidden files
+                if not any(name.lower().endswith(ext) for ext in valid_extensions):
+                    continue # ignore invalid file types
                 qual_name = join(root, name)
                 rel_name = join(dir, name)
                 logger.debug("...%s", rel_name)

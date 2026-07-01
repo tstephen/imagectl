@@ -25,3 +25,5 @@ TOOL = {
     "name": "imagectl",
     "version":  version(__package__),
 }
+# Set list of valid file extensions
+valid_extensions = [".heic", ".jpg", ".jpeg", ".png"]
