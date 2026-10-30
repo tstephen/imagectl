@@ -17,7 +17,7 @@ imagectl = "imagectl.__main__:main"
 tests = "scripts:tests"
 
 [tool.poetry.group.dev.dependencies]
-coverage = "^7.6.10"
+coverage = "^7.17.0"
 pytest = "^7.4.4"
 
 [build-system]
